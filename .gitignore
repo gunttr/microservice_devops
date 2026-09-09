@@ -1,0 +1,5 @@
+*.env
+*.venv
+*pycache*
+pgdata
+todo.md
