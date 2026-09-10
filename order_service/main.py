@@ -27,12 +27,6 @@ class OrderCreate(BaseModel):
     quantity: int
 
 
-class OrderReturn(BaseModel):
-    order_id: int
-    status: OrderStatus
-    created_at: str
-
-
 class OrderStatus(str, Enum):
     CREATED = "created"
     PAYMENT_SUCCESS = "payment_success"
@@ -50,7 +44,7 @@ async def execute_sql_querry(err_msg: str, query: str, args):
                 ) as con:
                     with con.cursor() as cur:
                         cur.execute(query, args)
-        
+
                         return cur.fetchone()
 
     except pg.OperationalError as op_err:
@@ -108,12 +102,20 @@ async def orders(order: OrderCreate) -> dict[str, int | None]:
         datetime.now()
         )
     )
-       
+
+    logging.info(
+    f"Order successfully created: "
+    f"order_id: {result[0]}; "
+    f"username: {order.username}; "
+    f"product_name: {order.product_name}; "
+    f"quantity: {order.quantity}"
+    )
+    
     return {
         "order_id": result[0]
     }
 
-pg.Error
+
 @app.get("/orders/{order_id}")
 async def get_order(order_id: int):
     result = await execute_sql_querry(
@@ -129,7 +131,7 @@ async def get_order(order_id: int):
         args=(order_id, )
     )
               
-    if result is None:
+    if not result:
         logging.warning(f"Order not found: id is {order_id}")
 
         raise HTTPException(
