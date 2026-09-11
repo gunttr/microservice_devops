@@ -6,6 +6,7 @@ from fastapi import HTTPException
 import logging
 from enum import Enum
 import random
+from datetime import datetime
 
 app = FastAPI()
 
@@ -24,10 +25,9 @@ class OrderPay(BaseModel):
     id: int
 
 
-class OrderStatus(str, Enum):
-    CREATED = "created"
-    PAYMENT_SUCCESS = "payment_success"
-    PAYMENT_FAILED = "payment_failed"
+class PaymentStatus(str, Enum):
+    SUCCESS = "success"
+    FAILED = "failed"
 
 
 @app.get("/")
@@ -45,12 +45,12 @@ async def health() -> dict[str, str]:
 
 
 @app.post("/payments")
-async def payments(order: OrderPay) -> dict[str, OrderStatus | str]:
-    status: OrderStatus = OrderStatus.PAYMENT_SUCCESS
+async def payments(order: OrderPay) -> dict[str, PaymentStatus]:
+    status: PaymentStatus = PaymentStatus.SUCCESS
+    created_at: datetime = datetime.now()
 
     if random.random() < 0.1: # типо ошибка внешнего апи
-        status = OrderStatus.PAYMENT_FAILED
-        logging.error(f"Payment API error: order_id is {order.id}")
+        status = PaymentStatus.FAILED
 
     try:
         with pg.connect(
@@ -62,22 +62,17 @@ async def payments(order: OrderPay) -> dict[str, OrderStatus | str]:
                 with con.cursor() as cur:
                     cur.execute(
                         """
-                        UPDATE orders \
-                        SET status = %s \
-                        WHERE id = %s AND status = 'created' \
+                        INSERT into payments ( \
+                        order_id, \
+                        status, \
+                        created_at) \
+                        VALUES (%s, %s, %s) \
                         RETURNING id;
-                        """, (status, order.id)
+                        """, 
+                        (order.id, status, created_at)
                     )
 
-                    updated_order = cur.fetchone()
-                    if not updated_order:
-                        logging.warning(
-                            f"Order {order.id} was already processed or does not exist"
-                        )
-                        return {
-                            "status": "Already processed or does not exist"
-                        }
-                        
+                    payment_id = cur.fetchone()[0]   
                 
     except pg.OperationalError as op_err:
         logging.critical(f"Connection failed: {op_err}")
@@ -92,13 +87,24 @@ async def payments(order: OrderPay) -> dict[str, OrderStatus | str]:
         
         raise HTTPException(
             status_code=500,
-            detail="Failed to pay order"
+            detail="Failed to process payment due to transaction issues"
         )
 
-    logging.info(
-        f"Order {order.id} was successfully paid"
-    )
+    if status == PaymentStatus.FAILED:
+        logging.error(
+            f"External payment API failed: "
+            f"payment_id: {payment_id}; "
+            f"order_id: {order.id}; "
+            f"created_at: {created_at}"
+        )
+    else:
+        logging.info(
+            f"Payment was processed successfully: "
+            f"payment_id: {payment_id}; "
+            f"order_id: {order.id}; "
+            f"created_at: {created_at}"
+        )
 
     return {
-        "status": status
+        "payment_status": status
     }
