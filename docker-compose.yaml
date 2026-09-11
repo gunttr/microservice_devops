@@ -44,6 +44,28 @@ services:
     networks:
       - microservices_devops
 
+  payment_service:
+    build: payment_service/
+    image: ghcr.io/gunttr/payment_service:test-amd64
+    container_name: payment_service
+    ports:
+      - "8001:8000"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+    restart: always
+    networks:
+      - microservices_devops
+
 volumes:
   pgdata:
     driver: local
