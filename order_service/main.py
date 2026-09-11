@@ -79,7 +79,9 @@ async def health() -> dict[str, str]:
 
 
 @app.post("/orders")
-async def orders(order: OrderCreate) -> dict[str, int | None]:    
+async def orders(order: OrderCreate) -> dict[str, int | None]:
+    created_at: datetime = datetime.now()
+
     result = await execute_sql_querry(
         err_msg="Failed to create order",
         query=
@@ -99,7 +101,7 @@ async def orders(order: OrderCreate) -> dict[str, int | None]:
         order.product_name,
         order.quantity,
         OrderStatus.CREATED,
-        datetime.now()
+        created_at
         )
     )
 
@@ -109,6 +111,7 @@ async def orders(order: OrderCreate) -> dict[str, int | None]:
     f"username: {order.username}; "
     f"product_name: {order.product_name}; "
     f"quantity: {order.quantity}"
+    f"created_at: {created_at}"
     )
     
     return {
