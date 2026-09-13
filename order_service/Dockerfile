@@ -1,7 +1,11 @@
-FROM python:3.14-alpine
+FROM python:3.14-slim
 WORKDIR /app
 
-RUN apk add --no-cache curl && adduser -H -D -s /bin/sh app-user
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    useradd --create-home --shell /bin/sh app-user
 
 COPY --chown=app-user:app-user requirements.txt .
 

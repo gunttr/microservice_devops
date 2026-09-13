@@ -7,8 +7,25 @@ import logging
 from enum import Enum
 import random
 from datetime import datetime
+from confluent_kafka import Consumer, Producer
+from contextlib import asynccontextmanager
+from threading import Thread
+import json
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    thread = Thread(
+        target=consume_orders,
+        daemon=True
+    )
+    thread.start()
+
+    yield
+
+    kafka_consumer.close()
+
+
+app = FastAPI(lifespan=lifespan)
 
 logging.basicConfig(
     level=os.getenv("LOG_LEVEL", logging.INFO),
@@ -21,13 +38,64 @@ postgres_db = os.getenv("POSTGRES_DB", "postgres_db")
 postgres_host = os.getenv("POSTGRES_HOST", "postgres")
 postgres_port = os.getenv("POSTGRES_PORT", "5432")
 
-class OrderPay(BaseModel):
-    id: int
+
+kafka_consumer = Consumer({
+    "bootstrap.servers": "kafka:9092",
+    "group.id": "payment_service"
+})
+kafka_producer = Producer({
+    "bootstrap.servers": "kafka:9092",
+})
 
 
 class PaymentStatus(str, Enum):
     SUCCESS = "success"
     FAILED = "failed"
+
+
+def kafka_delivery_callback(err, msg):
+    if err:
+        logging.error(
+            f"Event failed delivery: {err}"
+        )
+    else:
+        logging.info(
+            f"Produced event to topic payments: "
+            f"key = {msg.key().decode('utf-8')}; "
+            f"value = {msg.value().decode('utf-8')}"
+        )
+
+
+def consume_orders():
+    kafka_consumer.subscribe(["orders"])
+
+    try:
+        while True:
+            event = kafka_consumer.poll(1.0)
+
+            if not event:
+                continue
+
+            if event.error():
+                logging.error(
+                    f"Kafka consumer error: {event.error()}"
+                )
+                continue
+    
+            order_id: int = int(event.value().decode('utf-8'))
+            status: PaymentStatus = process_payments(order_id=order_id)
+            kafka_producer.produce(
+                topic="payments",
+                key="payment",
+                value=json.dumps({
+                    "order_id": order_id,
+                    "status": status.value
+                }).encode('utf-8'),
+                callback=kafka_delivery_callback
+            )
+            kafka_producer.flush()
+    finally:
+        kafka_consumer.close()
 
 
 @app.get("/")
@@ -44,8 +112,7 @@ async def health() -> dict[str, str]:
     }
 
 
-@app.post("/payments")
-async def payments(order: OrderPay) -> dict[str, PaymentStatus]:
+def process_payments(order_id: int) -> PaymentStatus:
     status: PaymentStatus = PaymentStatus.SUCCESS
     created_at: datetime = datetime.now()
 
@@ -69,7 +136,7 @@ async def payments(order: OrderPay) -> dict[str, PaymentStatus]:
                         VALUES (%s, %s, %s) \
                         RETURNING id;
                         """, 
-                        (order.id, status, created_at)
+                        (order_id, status, created_at)
                     )
 
                     payment_id = cur.fetchone()[0]   
@@ -94,17 +161,15 @@ async def payments(order: OrderPay) -> dict[str, PaymentStatus]:
         logging.error(
             f"External payment API failed: "
             f"payment_id: {payment_id}; "
-            f"order_id: {order.id}; "
+            f"order_id: {order_id}; "
             f"created_at: {created_at}"
         )
     else:
         logging.info(
             f"Payment was processed successfully: "
             f"payment_id: {payment_id}; "
-            f"order_id: {order.id}; "
+            f"order_id: {order_id}; "
             f"created_at: {created_at}"
         )
 
-    return {
-        "payment_status": status
-    }
+    return status
