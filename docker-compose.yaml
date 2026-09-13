@@ -120,6 +120,25 @@ services:
       kafka-init:
         condition: service_completed_successfully
 
+  notification_service:
+    build: notification_service/
+    image: ghcr.io/gunttr/notification_service:test-amd64
+    container_name: notification_service
+    ports:
+      - "8002:8000"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: always
+    networks:
+      - microservices_devops
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+
 volumes:
   pgdata:
     driver: local
