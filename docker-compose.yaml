@@ -59,7 +59,8 @@ services:
     command: >
       sh -c "
       /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --topic orders --bootstrap-server kafka:9092 &&
-      /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --topic payments --bootstrap-server kafka:9092
+      /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --topic payments --bootstrap-server kafka:9092 &&
+      /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --topic notifications --bootstrap-server kafka:9092
       "
     depends_on:
       kafka:

@@ -99,7 +99,7 @@ def kafka_delivery_callback(err, msg):
         )
     else:
         logging.info(
-            f"Produced event to topic orders: "
+            f"Produced event to topic {msg.topic()}: "
             f"key = {msg.key().decode('utf-8')}; "
             f"value = {msg.value().decode('utf-8')}"
         )
@@ -157,10 +157,24 @@ async def orders(order: OrderCreate) -> dict[str, int | None]:
     f"created_at: {created_at}"
     )
 
+    # отправляем payment_service
     kafka_producer.produce(
         topic="orders",
         key="order_id",
         value=str(order_id),
+        callback=kafka_delivery_callback
+    )
+
+    # отправляем notification_service
+    kafka_producer.produce(
+        topic="notifications",
+        key="order",
+        value=json.dumps(
+            {
+                "order_id": order_id,
+                "username": order.username
+            }
+        ),
         callback=kafka_delivery_callback
     )
 
