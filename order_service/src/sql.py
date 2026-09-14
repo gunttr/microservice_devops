@@ -4,7 +4,7 @@ import os
 from src.order import OrderStatus
 from src.logger import logger
 from datetime import datetime
-
+from src.metrics import payment_failed_orders_counter, payment_success_orders_counter
 
 class PGSQLManager:
     def __init__(self, user: str, password: str, db: str, host: str, port: str) -> None:
@@ -103,8 +103,10 @@ class PGSQLManager:
 
         if payment.get("status") == 'success':
             order_status = OrderStatus.PAYMENT_SUCCESS
+            payment_success_orders_counter.add(1)
         else:
             order_status = OrderStatus.PAYMENT_FAILED
+            payment_failed_orders_counter.add(1)
 
         self.__execute_sql_querry(
             err_msg="Failed to update order status",

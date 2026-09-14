@@ -3,6 +3,7 @@ from src.order import OrderCreate
 from src.sql import pgsql_manager
 from src.kafka import kafka_manager
 from src.logger import logger
+from src.metrics import orders_created_counter
 from fastapi import APIRouter
 orders_router = APIRouter()
 
@@ -23,6 +24,8 @@ async def orders(order: OrderCreate) -> dict[str, int | None]:
     f"quantity: {order.quantity}; "
     f"created_at: {created_at}"
     )
+
+    orders_created_counter.add(1)
 
     kafka_manager.produce_orders(
         order_id=order_id

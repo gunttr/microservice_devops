@@ -68,6 +68,35 @@ services:
     networks:
       - microservices_devops
     
+# observability
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.160.0-amd64
+    container_name: otel-collector
+    restart: unless-stopped
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./configs/otel-collector.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4318:4318"   # OTLP HTTP reciever
+      - "8089:8089"   # для того чтобы промик скрейпил
+    networks:
+      - microservices_devops
+
+  prometheus:
+    image: prom/prometheus:v3.13.3
+    container_name: prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090" # стандартный порт
+    volumes:
+      - ./configs/prometheus.yaml:/etc/prometheus/prometheus.yaml
+#      - ./prometheus-data:/prometheus/data
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yaml" # путь к конфигу
+#      - "--storage.tsdb.path=/prometheus/data" # путь к хранению tsdb
+    networks:
+      - microservices_devops
 
   order_service:
     build: order_service/
@@ -87,6 +116,13 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_HOST: postgres
       POSTGRES_PORT: "5432"
+
+      KAFKA_HOSTNAME: "kafka"
+      KAFKA_PORT: "9092"
+      KAFKA_GROUP_ID: "order_service"
+
+      LOG_LEVEL: "INFO"
+      
     restart: always
     networks:
       - microservices_devops
@@ -143,6 +179,8 @@ volumes:
   pgdata:
     driver: local
   kafka-data:
+    driver: local
+  prometheus-data:
     driver: local
 
 networks:
