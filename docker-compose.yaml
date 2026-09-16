@@ -80,6 +80,12 @@ services:
     ports:
       - "4318:4318"   # OTLP HTTP reciever
       - "8089:8089"   # для того чтобы промик скрейпил
+    healthcheck:
+      test: ["CMD", "/otelcol-contrib", "validate", "--config=/etc/otel-collector-config.yaml"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     networks:
       - microservices_devops
 
