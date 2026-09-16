@@ -1,0 +1,75 @@
+# https://github.com/burningalchemist/sql_exporter/blob/master/documentation/sql_exporter.yml
+# конфиг взят оттуда для референса
+
+target:
+  name: postgres_db
+  data_source_name: "{{ SQLEXPORTER_TARGET_DSN }}"
+  collectors: [business_metrics]
+
+collectors:
+  - collector_name: business_metrics
+
+    metrics:
+      - metric_name: orders_created_total
+        type: gauge
+        help: 'Current number of orders with status created.'
+        static_labels:
+          from: db
+        values: [value]
+        query: |
+          SELECT COUNT(*) AS value
+          FROM orders;
+
+      - metric_name: payment_success_orders_total
+        type: gauge
+        help: 'Current number of orders with payment_success status.'
+        static_labels:
+          from: db
+        values: [value]
+        query: |
+          SELECT COUNT(*) AS value
+          FROM orders
+          WHERE status = 'payment_success';
+
+      - metric_name: payment_failed_orders_total
+        type: gauge
+        help: 'Current number of orders with payment_failed status.'
+        static_labels:
+          from: db
+        values: [value]
+        query: |
+          SELECT COUNT(*) AS value
+          FROM orders
+          WHERE status = 'payment_failed';
+
+      - metric_name: payments_processed_total
+        type: gauge
+        help: 'Current number of processed payments.'
+        static_labels:
+          from: db
+        values: [value]
+        query: |
+          SELECT COUNT(*) AS value
+          FROM payments;
+
+      - metric_name: success_payments_processed_total
+        type: gauge
+        help: 'Current number of successfully processed payments.'
+        static_labels:
+          from: db
+        values: [value]
+        query: |
+          SELECT COUNT(*) AS value
+          FROM payments
+          WHERE status = 'success';
+
+      - metric_name: failed_payments_processed_total
+        type: gauge
+        help: 'Current number of payments that failed to process.'
+        static_labels:
+          from: db
+        values: [value]
+        query: |
+          SELECT COUNT(*) AS value
+          FROM payments
+          WHERE status = 'failed';

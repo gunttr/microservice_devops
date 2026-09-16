@@ -83,6 +83,28 @@ services:
     networks:
       - microservices_devops
 
+  sql_exporter:
+    image: burningalchemist/sql_exporter:0.24.8
+    container_name: sql_exporter
+    restart: unless-stopped
+    ports:
+      - "9399:9399" # test with curl localhost:9399/metrics
+    volumes:
+      - ./configs/sql_exporter.yaml:/config/sql_exporter.yaml
+    command:
+      - "-config.file"
+      - "/config/sql_exporter.yaml"
+    environment:
+      SQLEXPORTER_TARGET_DSN: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9399/metrics"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - microservices_devops
+
   prometheus:
     image: prom/prometheus:v3.13.3
     container_name: prometheus
