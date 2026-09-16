@@ -1,5 +1,17 @@
 services:
   
+  # proxy
+  nginx:
+    image: nginx:1.31.6-alpine
+    container_name: nginx
+    restart: unless-stopped
+    volumes:
+      - ./configs/nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "8000:80"
+    networks:
+      - microservices_devops
+
   postgres:
     image: postgres:18
     container_name: postgres
@@ -136,8 +148,6 @@ services:
     build: order_service/
     image: ghcr.io/gunttr/order_service:test-amd64
     container_name: order_service
-    ports:
-      - "8000:8000"
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8000/health"]
       interval: 10s
