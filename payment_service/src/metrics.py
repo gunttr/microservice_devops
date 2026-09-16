@@ -24,17 +24,17 @@ metrics.set_meter_provider(meterProvider)
 
 meter = metrics.get_meter(name=f"{OTEL_SERVICE_NAME}_meter")
 
-payments_processed_counter = meter.create_counter(
+payments_processed_total = meter.create_counter(
     name="payments_processed_total",
     description="Total number of processed payments"
 )
 
-success_payments_processed_counter = meter.create_counter(
-    name="success_payments_processed_total",
+payments_succeeded_total = meter.create_counter(
+    name="payments_succeeded_total",
     description="Total number of successfully processed payments"
 )
 
-failed_payments_processed_counter = meter.create_counter(
-    name="failed_payments_processed_total",
+payments_failed_total = meter.create_counter(
+    name="payments_failed_total",
     description="Total number of payments failed to process"
 )

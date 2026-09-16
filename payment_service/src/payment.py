@@ -6,9 +6,9 @@ import psycopg2 as pg
 from fastapi import HTTPException
 import os
 from src.metrics import (
-    payments_processed_counter,
-    success_payments_processed_counter,
-    failed_payments_processed_counter
+    payments_processed_total,
+    payments_succeeded_total,
+    payments_failed_total
 )
 
 
@@ -76,7 +76,7 @@ def process_payments(order_id: int) -> PaymentStatus:
             f"order_id: {order_id}; "
             f"created_at: {created_at}"
         )
-        failed_payments_processed_counter.add(1)
+        payments_failed_total.add(1)
     else:
         logger.info(
             f"Payment was processed successfully: "
@@ -84,8 +84,8 @@ def process_payments(order_id: int) -> PaymentStatus:
             f"order_id: {order_id}; "
             f"created_at: {created_at}"
         )
-        success_payments_processed_counter.add(1)
+        payments_succeeded_total.add(1)
 
-    payments_processed_counter.add(1)
+    payments_processed_total.add(1)
 
     return status
