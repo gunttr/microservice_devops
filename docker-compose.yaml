@@ -122,6 +122,11 @@ services:
       KAFKA_GROUP_ID: "order_service"
 
       LOG_LEVEL: "INFO"
+
+      OTEL_EXPORTER_OLTP_ENDPOINT: "http://otel-collector:4318"
+      OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: "http://otel-collector:4318/v1/metrics"
+      OTEL_EXPORTER_OTLP_TIMEOUT: 15000 # 15 секунд
+      OTEL_EXPORTER_OTLP_METRICS_TIMEOUT: 15000 # 15 секунд
       
     restart: always
     networks:
