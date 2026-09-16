@@ -160,6 +160,11 @@ services:
       KAFKA_HOSTNAME: "kafka"
       KAFKA_PORT: "9092"
       KAFKA_GROUP_ID: "payment_service"
+
+      OTEL_EXPORTER_OLTP_ENDPOINT: "http://otel-collector:4318"
+      OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: "http://otel-collector:4318/v1/metrics"
+      OTEL_EXPORTER_OTLP_TIMEOUT: 15000 # 15 секунд
+      OTEL_EXPORTER_OTLP_METRICS_TIMEOUT: 15000 # 15 секунд
     restart: always
     networks:
       - microservices_devops
