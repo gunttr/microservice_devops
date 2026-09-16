@@ -9,7 +9,7 @@ orders_router = APIRouter()
 
 
 @orders_router.post("/orders")
-async def orders(order: OrderCreate) -> dict[str, int | None]:
+async def orders(order: OrderCreate) -> dict[str, int]:
     order_id, created_at = pgsql_manager.create_order(
         username=order.username,
         product_name=order.product_name,
