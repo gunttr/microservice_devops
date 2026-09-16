@@ -117,6 +117,12 @@ services:
     command:
       - "--config.file=/etc/prometheus/prometheus.yaml" # путь к конфигу
       - --storage.tsdb.path=/prometheus/data" # путь к хранению tsdb
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9090/-/healthy"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     networks:
       - microservices_devops
 
