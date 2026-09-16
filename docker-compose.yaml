@@ -235,6 +235,19 @@ services:
       kafka-init:
         condition: service_completed_successfully
 
+  test-api-script:
+    build: test-api-script/
+    image: ghcr.io/gunttr/test-api-script:test-amd64
+    container_name: test-api-script
+    restart: unless-stopped
+    environment:
+      API_ENDPOINT: "http://nginx:80"
+      TIME_TO_SLEEP_SECONDS: 180
+      REQUESTS_PER_ITERATION: 20
+    networks:
+      - microservices_devops
+
+
 volumes:
   pgdata:
     driver: local
