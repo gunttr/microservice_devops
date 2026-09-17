@@ -20,6 +20,11 @@ exporters:
   debug:
     verbosity: detailed
 
+  otlphttp/logs:
+    endpoint: "http://loki:3100/otlp"
+    tls:
+      insecure: true
+
 extensions:
   health_check:
     endpoint: 0.0.0.0:13133 # такой дебильный дефолтный порт. в компоузе бесполезно, но для кубера норм будет
@@ -35,4 +40,4 @@ service:
     logs:
       receivers: [fluent_forward]
       processors: [resourcedetection/system]
-      exporters: [debug]
+      exporters: [debug, otlphttp/logs]
