@@ -4,13 +4,25 @@ receivers:
       http:
         endpoint: "0.0.0.0:4318"
 
+  fluent_forward:
+    endpoint: 0.0.0.0:24224 # дебильный порт
+
+processors:
+  resourcedetection/system:
+    detectors: [system]
+    system:
+      hostname_sources: [os]
+
 exporters:
   prometheus:
     endpoint: "0.0.0.0:8089"
 
+  debug:
+    verbosity: detailed
+
 extensions:
   health_check:
-    endpoint: 0.0.0.0:13133 # такой дебильный дефолтный порт
+    endpoint: 0.0.0.0:13133 # такой дебильный дефолтный порт. в компоузе бесполезно, но для кубера норм будет
     path: /
 
 service:
@@ -20,3 +32,7 @@ service:
     metrics: 
       receivers: [otlp]
       exporters: [prometheus]
+    logs:
+      receivers: [fluent_forward]
+      processors: [resourcedetection/system]
+      exporters: [debug]

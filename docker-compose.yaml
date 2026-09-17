@@ -1,3 +1,11 @@
+x-logging: &default-logging
+  driver: fluentd
+  options:
+    fluentd-address: localhost:24224
+    fluentd-async: "true"
+    fluentd-sub-second-precision: "true"
+    tag: docker.{{.Name}}
+
 services:
   
   # proxy
@@ -84,6 +92,8 @@ services:
     container_name: otel-collector
     restart: unless-stopped
     command: ["--config=/etc/otel-collector-config.yaml"]
+    ports:
+      - "24224:24224"
     volumes:
       - ./configs/otel-collector.yaml:/etc/otel-collector-config.yaml
     healthcheck:
@@ -140,6 +150,7 @@ services:
     build: order_service/
     image: ghcr.io/gunttr/order_service:test-amd64
     container_name: order_service
+    logging: *default-logging
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8000/health"]
       interval: 10s
@@ -159,7 +170,7 @@ services:
 
       LOG_LEVEL: "INFO"
 
-      OTEL_EXPORTER_OLTP_ENDPOINT: "http://otel-collector:4318"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4318"
       OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: "http://otel-collector:4318/v1/metrics"
       OTEL_EXPORTER_OTLP_TIMEOUT: 15000 # 15 секунд
       OTEL_EXPORTER_OTLP_METRICS_TIMEOUT: 15000 # 15 секунд
@@ -176,6 +187,7 @@ services:
     build: payment_service/
     image: ghcr.io/gunttr/payment_service:test-amd64
     container_name: payment_service
+    logging: *default-logging
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8000/health"]
       interval: 10s
@@ -210,6 +222,7 @@ services:
     build: notification_service/
     image: ghcr.io/gunttr/notification_service:test-amd64
     container_name: notification_service
+    logging: *default-logging
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8000/health"]
       interval: 10s
