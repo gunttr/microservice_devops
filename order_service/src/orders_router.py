@@ -2,8 +2,8 @@ from fastapi import HTTPException
 from src.order import OrderCreate
 from src.sql import pgsql_manager
 from src.kafka import kafka_manager
-from src.logger import logger
-from src.metrics import orders_created_total
+from src.otel.logger import logger
+from src.otel.metrics import orders_created_total
 from fastapi import APIRouter
 orders_router = APIRouter()
 

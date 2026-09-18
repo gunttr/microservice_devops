@@ -1,5 +1,5 @@
 from confluent_kafka import Consumer
-from src.logger import logger
+from src.otel.logger import logger
 import json
 from src.notification import send_notification
 import os

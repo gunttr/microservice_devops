@@ -1,5 +1,5 @@
 from confluent_kafka import Consumer, Producer
-from src.logger import logger
+from src.otel.logger import logger
 import json
 from src.payment import PaymentStatus
 from src.payment import process_payments

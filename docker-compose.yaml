@@ -1,13 +1,4 @@
-x-logging: &default-logging
-  driver: fluentd
-  options:
-    fluentd-address: localhost:24224
-    fluentd-async: "true"
-    fluentd-sub-second-precision: "true"
-    tag: docker.{{.Name}}
-
 services:
-  
   # proxy
   nginx:
     image: nginx:1.31.6-alpine
@@ -179,7 +170,6 @@ services:
     build: order_service/
     image: ghcr.io/gunttr/order_service:test-amd64
     container_name: order_service
-    logging: *default-logging
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8000/health"]
       interval: 10s
@@ -199,10 +189,10 @@ services:
 
       LOG_LEVEL: "INFO"
 
-      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4318"
-      OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: "http://otel-collector:4318/v1/metrics"
+      OTEL_SERVICE_NAME: order_service
       OTEL_EXPORTER_OTLP_TIMEOUT: 15000 # 15 секунд
-      OTEL_EXPORTER_OTLP_METRICS_TIMEOUT: 15000 # 15 секунд
+      OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: "http://otel-collector:4318/v1/metrics"
+      OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: "http://otel-collector:4318/v1/logs"
       
     restart: always
     networks:
@@ -216,7 +206,6 @@ services:
     build: payment_service/
     image: ghcr.io/gunttr/payment_service:test-amd64
     container_name: payment_service
-    logging: *default-logging
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8000/health"]
       interval: 10s
@@ -236,10 +225,10 @@ services:
       KAFKA_PORT: "9092"
       KAFKA_GROUP_ID: "payment_service"
 
-      OTEL_EXPORTER_OLTP_ENDPOINT: "http://otel-collector:4318"
-      OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: "http://otel-collector:4318/v1/metrics"
+      OTEL_SERVICE_NAME: payment_service
       OTEL_EXPORTER_OTLP_TIMEOUT: 15000 # 15 секунд
-      OTEL_EXPORTER_OTLP_METRICS_TIMEOUT: 15000 # 15 секунд
+      OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: "http://otel-collector:4318/v1/metrics"
+      OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: "http://otel-collector:4318/v1/logs"
     restart: always
     networks:
       - microservices_devops
@@ -251,7 +240,6 @@ services:
     build: notification_service/
     image: ghcr.io/gunttr/notification_service:test-amd64
     container_name: notification_service
-    logging: *default-logging
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8000/health"]
       interval: 10s
@@ -266,10 +254,10 @@ services:
 
       LOG_LEVEL: "INFO"
 
-      OTEL_EXPORTER_OLTP_ENDPOINT: "http://otel-collector:4318"
-      OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: "http://otel-collector:4318/v1/metrics"
+      OTEL_SERVICE_NAME: notification_service
       OTEL_EXPORTER_OTLP_TIMEOUT: 15000 # 15 секунд
-      OTEL_EXPORTER_OTLP_METRICS_TIMEOUT: 15000 # 15 секунд
+      OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: "http://otel-collector:4318/v1/metrics"
+      OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: "http://otel-collector:4318/v1/logs"
 
     networks:
       - microservices_devops

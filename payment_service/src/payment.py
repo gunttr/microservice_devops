@@ -1,11 +1,11 @@
 from enum import Enum
-from src.logger import logger
+from src.otel.logger import logger
 from datetime import datetime
 from random import random
 import psycopg2 as pg
 from fastapi import HTTPException
 import os
-from src.metrics import (
+from src.otel.metrics import (
     payments_processed_total,
     payments_succeeded_total,
     payments_failed_total

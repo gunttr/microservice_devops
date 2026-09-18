@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from threading import Thread
 from src.kafka import kafka_manager
 from src.orders_router import orders_router
-from src.logger import logger
+from src.otel.logger import logger
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

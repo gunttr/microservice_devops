@@ -2,9 +2,9 @@ from fastapi import HTTPException
 import psycopg2 as pg
 import os
 from src.order import OrderStatus
-from src.logger import logger
+from src.otel.logger import logger
 from datetime import datetime
-from src.metrics import payment_failed_orders_total, payment_success_orders_total
+from src.otel.metrics import payment_failed_orders_total, payment_success_orders_total
 
 class PGSQLManager:
     def __init__(self, user: str, password: str, db: str, host: str, port: str) -> None:

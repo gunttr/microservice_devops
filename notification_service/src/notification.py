@@ -1,6 +1,6 @@
 from random import random
-from src.logger import logger
-from src.metrics import (
+from src.otel.logger import logger
+from src.otel.metrics import (
     notifications_sent_total,
     notifications_failed_total,
     notifications_succeeded_total,

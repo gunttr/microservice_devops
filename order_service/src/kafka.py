@@ -1,6 +1,6 @@
 from confluent_kafka import Producer, Consumer
 import json
-from src.logger import logger
+from src.otel.logger import logger
 from src.sql import pgsql_manager
 import os
 

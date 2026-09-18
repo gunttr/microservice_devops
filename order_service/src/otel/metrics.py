@@ -2,11 +2,11 @@ from opentelemetry import metrics
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
-from opentelemetry.sdk.resources import Resource
 import os
+from src.otel.resource import otel_resource
 
 
-OTEL_SERVICE_NAME: str = os.getenv("OTEL_SERVICE_NAME", "payment_service")
+OTEL_SERVICE_NAME: str = os.getenv("OTEL_SERVICE_NAME", "order_service")
 # следующие переменные окружения автоматически подтянуться sdk, если не передавать параметры
 # OTEL_EXPORTER_OLTP_ENDPOINT=http://localhost:4318
 # OTEL_EXPORTER_OTLP_METRICS_ENDPOINT="http://localhost:4318/v1/metrics"
@@ -14,27 +14,23 @@ OTEL_SERVICE_NAME: str = os.getenv("OTEL_SERVICE_NAME", "payment_service")
 # OTEL_EXPORTER_OTLP_METRICS_TIMEOUT=10000 (10s)
 
 
-resource = Resource.create(attributes={
-    "service.name": OTEL_SERVICE_NAME
-})
-
 reader = PeriodicExportingMetricReader(OTLPMetricExporter())
-meterProvider = MeterProvider(resource=resource, metric_readers=[reader])
+meterProvider = MeterProvider(resource=otel_resource, metric_readers=[reader])
 metrics.set_meter_provider(meterProvider)
 
 meter = metrics.get_meter(name=f"{OTEL_SERVICE_NAME}_meter")
 
-payments_processed_total = meter.create_counter(
-    name="payments_processed_total",
-    description="Total number of processed payments"
+orders_created_total = meter.create_counter(
+    name="orders_created_total",
+    description="Total number of created orders by the order service"
 )
 
-payments_succeeded_total = meter.create_counter(
-    name="payments_succeeded_total",
-    description="Total number of successfully processed payments"
+payment_success_orders_total = meter.create_counter(
+    name="payment_success_orders_total",
+    description="Total number of orders with payment_success status"
 )
 
-payments_failed_total = meter.create_counter(
-    name="payments_failed_total",
-    description="Total number of payments failed to process"
+payment_failed_orders_total = meter.create_counter(
+    name="payment_failed_orders_total",
+    description="Total number of orders with payment_failed status"
 )
