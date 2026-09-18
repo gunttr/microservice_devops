@@ -17,12 +17,14 @@ async def orders(order: OrderCreate) -> dict[str, int]:
     )
 
     logger.info(
-    f"Order successfully created: "
-    f"order_id: {order_id}; "
-    f"username: {order.username}; "
-    f"product_name: {order.product_name}; "
-    f"quantity: {order.quantity}; "
-    f"created_at: {created_at}"
+        msg="Order successfully created",
+        extra={
+            "order_id": order_id,
+            "username": order.username,
+            "product_name": order.product_name,
+            "quantity": order.quantity,
+            "created_at": str(created_at)
+        }
     )
 
     orders_created_total.add(1)
@@ -46,14 +48,24 @@ async def get_order(order_id: int):
     result = pgsql_manager.get_order(order_id=order_id)
               
     if not result:
-        logger.warning(f"Order not found: id is {order_id}")
+        logger.warning(
+            msg="Order not found",
+            extra={
+                "order_id": order_id
+            }
+        )
 
         raise HTTPException(
             status_code=404,
             detail="Order not found",
         )
 
-    logger.info(f"Order successfully retrieved: id is {order_id} ")
+    logger.info(
+        msg="Order successfully retrieved",
+        extra={
+            "order_id": order_id
+        }
+    )
 
     return {
         "order_id": order_id,

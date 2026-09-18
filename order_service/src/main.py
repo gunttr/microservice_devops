@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from threading import Thread
 from src.kafka import kafka_manager
 from src.orders_router import orders_router
+from src.logger import logger
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -19,7 +20,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(orders_router)
-
+logger.info("The order service has just started")
 
 @app.get("/")
 async def root() -> dict[str, str]:

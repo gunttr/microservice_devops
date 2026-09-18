@@ -33,7 +33,12 @@ class PGSQLManager:
                             return None
 
         except pg.OperationalError as op_err:
-            logger.critical(f"Connection failed: {op_err}")
+            logger.critical(
+                msg="Connection to PostgreSQL database failed",
+                extra={
+                    "error": str(op_err),
+                }
+            )
 
             raise HTTPException(
                 status_code=500,
@@ -41,7 +46,12 @@ class PGSQLManager:
             )
 
         except pg.Error as err:
-            logger.error(f"Transaction failed: {err}")
+            logger.error(
+                msg="PostgreSQL transaction failed",
+                extra={
+                    "error": str(err)
+                }
+            )
             
             raise HTTPException(
                 status_code=500,
@@ -118,11 +128,13 @@ class PGSQLManager:
             """, 
             args=(order_status, order_id)
         )
-
+    
         logger.info(
-            f"Order status updated: "
-            f"order_id: {order_id}; "
-            f"status: {payment.get("status")}"
+            msg="Order status updated",
+            extra={
+                "order_id": order_id,
+                "status": payment.get("status")
+            }
         )
 
 
@@ -133,4 +145,3 @@ pgsql_manager: PGSQLManager = PGSQLManager(
     host=os.getenv("POSTGRES_HOST", "localhost"),
     port=os.getenv("POSTGRES_PORT", "5432")
 )
-

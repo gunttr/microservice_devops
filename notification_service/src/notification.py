@@ -16,16 +16,20 @@ def send_notification(notification: dict[str, str]):
     # настоящей отправки сообщений не будет
     if random() < 0.1: # имитируем ошибку отправки
         logger.error(
-            f"Failed to send notification: "
-            f"order_id: {order_id}; "
-            f"username: {username}" 
+            msg="Failed to send notification",
+            extra={
+                "order_id": order_id,
+                "username": username
+            }
         )
         notifications_failed_total.add(1)
         return
     
     logger.info(
-        f"Successfully sent notification: "
-        f"order_id: {order_id}; "
-        f"username: {username}" 
+        msg="Successfully sent notification",
+        extra={
+            "order_id": order_id,
+            "username": username
+        }
     )
     notifications_succeeded_total.add(1)

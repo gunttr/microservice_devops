@@ -54,7 +54,12 @@ def process_payments(order_id: int) -> PaymentStatus:
                     payment_id = cur.fetchone()[0]   
                 
     except pg.OperationalError as op_err:
-        logger.critical(f"Connection failed: {op_err}")
+        logger.critical(
+            msg="Connection to PostgreSQL database failed",
+            extra={
+                "error": str(op_err),
+            }
+        )
 
         raise HTTPException(
             status_code=500,
@@ -62,7 +67,12 @@ def process_payments(order_id: int) -> PaymentStatus:
         )
 
     except pg.Error as err:
-        logger.error(f"Transaction failed: {err}")
+        logger.error(
+            msg="PostgreSQL transaction failed",
+            extra={
+                "error": str(err)
+            }
+        )
         
         raise HTTPException(
             status_code=500,
@@ -71,18 +81,23 @@ def process_payments(order_id: int) -> PaymentStatus:
 
     if status == PaymentStatus.FAILED:
         logger.error(
-            f"External payment API failed: "
-            f"payment_id: {payment_id}; "
-            f"order_id: {order_id}; "
-            f"created_at: {created_at}"
+            msg="External payment API failed",
+            extra={
+                "payment_id": payment_id,
+                "order_id": order_id,
+                "created_at": str(created_at)
+            }
+            
         )
         payments_failed_total.add(1)
     else:
         logger.info(
-            f"Payment was processed successfully: "
-            f"payment_id: {payment_id}; "
-            f"order_id: {order_id}; "
-            f"created_at: {created_at}"
+            msg="Payment was processed successfully",
+            extra={
+                "payment_id": payment_id,
+                "order_id": order_id,
+                "created_at": str(created_at)
+            }
         )
         payments_succeeded_total.add(1)
 

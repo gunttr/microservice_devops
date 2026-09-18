@@ -5,7 +5,6 @@ from src.payment import PaymentStatus
 from src.payment import process_payments
 import os
 
-
 class KafkaManager:
     def __init__(self, hostname: str, port: str, group_id: str) -> None:
         self.__kafka_consumer = Consumer({
@@ -19,18 +18,28 @@ class KafkaManager:
     def __kafka_delivery_callback(self, err, msg):
         if err:
             logger.error(
-                f"Event failed delivery: {err}"
+                msg="Failed to produce kafka event",
+                extra={
+                    "topic": msg.topic(),
+                    "key": msg.key().decode('utf-8'),
+                    "value": json.loads(msg.value().decode('utf-8')),
+                    "error": str(err)
+                }
             )
         else:
             logger.info(
-                f"Produced event to topic {msg.topic()}: "
-                f"key = {msg.key().decode('utf-8')}; "
-                f"value = {msg.value().decode('utf-8')}"
+                msg="Kafka event produced successfully",
+                extra={
+                    "topic": msg.topic(),
+                    "key": msg.key().decode('utf-8'),
+                    "value": json.loads(msg.value().decode('utf-8'))
+                }
             )
 
 
     def consume_orders(self):
-        self.__kafka_consumer.subscribe(["orders"])
+        consume_topic: str = "orders"
+        self.__kafka_consumer.subscribe([consume_topic])
 
         try:
             while True:
@@ -41,7 +50,11 @@ class KafkaManager:
 
                 if event.error():
                     logger.error(
-                        f"Kafka consumer error: {event.error()}"
+                        msg="Kafka failed to consume",
+                        extra={
+                            "topic": consume_topic,
+                            "error": str(event.error())
+                        }
                     )
                     continue
         
@@ -57,6 +70,14 @@ class KafkaManager:
                     callback=self.__kafka_delivery_callback
                 )
                 self.__kafka_producer.flush()
+        except Exception as err:
+            logger.error(
+                msg="Kafka consumer crashed",
+                extra={
+                    "topic": consume_topic,
+                    "error": str(err)
+                }
+            )
         finally:
             self.__kafka_consumer.close()
 

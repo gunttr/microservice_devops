@@ -17,7 +17,8 @@ class KafkaManager:
 
 
     def consume_notifications(self):
-        self.__consumer.subscribe(["notifications"])
+        consume_topic: str = "notifications"
+        self.__consumer.subscribe([consume_topic])
         
         try:
             while True:
@@ -28,15 +29,25 @@ class KafkaManager:
                     
                 if event.error():
                     logger.error(
-                        f"Kafka consumer error: {event.error()}"
+                        msg="Kafka failed to consume",
+                        extra={
+                            "topic": consume_topic,
+                            "error": str(event.error())
+                        }
                     )
                     continue
 
                 notification = json.loads(event.value().decode('utf-8'))
                 send_notification(notification=notification)
             
-        except:
-            logger.error("Notification consumer crashed")
+        except Exception as err:
+            logger.error(
+                msg="Kafka consumer crashed",
+                extra={
+                    "topic": consume_topic,
+                    "error": str(err)
+                }
+            )
         finally:
             self.__consumer.close()
 

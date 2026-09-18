@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from threading import Thread
 from src.kafka import kafka_manager
-
+from src.logger import logger
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -17,7 +17,7 @@ async def lifespan(app: FastAPI):
     kafka_manager.close_consumer()
 
 app = FastAPI(lifespan=lifespan)
-
+logger.info("The notification service has just started")
 
 @app.get("/")
 async def root() -> dict[str, str]:

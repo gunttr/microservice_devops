@@ -19,18 +19,28 @@ class KafkaManager:
     def __kafka_delivery_callback(self, err, msg):
         if err:
             logger.error(
-                f"Event failed delivery: {err}"
+                msg="Failed to produce kafka event",
+                extra={
+                    "topic": msg.topic(),
+                    "key": msg.key().decode('utf-8'),
+                    "value": json.loads(msg.value().decode('utf-8')),
+                    "error": str(err)
+                }
             )
         else:
             logger.info(
-                f"Produced event to topic {msg.topic()}: "
-                f"key = {msg.key().decode('utf-8')}; "
-                f"value = {msg.value().decode('utf-8')}"
+                msg="Kafka event produced successfully",
+                extra={
+                    "topic": msg.topic(),
+                    "key": msg.key().decode('utf-8'),
+                    "value": json.loads(msg.value().decode('utf-8'))
+                }
             )
 
 
     def consume_payments(self):
-        self.__kafka_consumer.subscribe(["payments"])
+        consume_topic: str = "payments"
+        self.__kafka_consumer.subscribe([consume_topic])
         
         try:
             while True:
@@ -41,14 +51,24 @@ class KafkaManager:
                     
                 if event.error():
                     logger.error(
-                        f"Kafka consumer error: {event.error()}"
+                        msg="Kafka failed to consume",
+                        extra={
+                            "topic": consume_topic,
+                            "error": str(event.error())
+                        }
                     )
                     continue
 
                 payment = json.loads(event.value().decode('utf-8'))
                 pgsql_manager.update_order_status(payment=payment)
-        except:
-            logger.error("Payment consumer crashed")
+        except Exception as err:
+            logger.error(
+                msg="Kafka consumer crashed",
+                extra={
+                    "topic": consume_topic,
+                    "error": err
+                }
+            )
         finally:
             self.__kafka_consumer.close()
 
@@ -57,12 +77,10 @@ class KafkaManager:
         self.__kafka_producer.produce(
             topic="notifications",
             key="order",
-            value=json.dumps(
-                {
+            value=json.dumps({
                     "order_id": order_id,
                     "username": order_username
-                }
-            ),
+                }),
             callback=self.__kafka_delivery_callback
         )
     
