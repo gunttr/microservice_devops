@@ -34,3 +34,15 @@ async def health() -> dict[str, str]:
     return {
         "status": "healthy"
     }
+
+
+@app.get("/critical")
+async def critical() -> dict[str, str]:
+    # для того чтобы настроить алерты в графане
+    logger.critical(
+        msg="Critical error happened!"
+    )
+
+    return {
+        "critical": "very"
+    }
