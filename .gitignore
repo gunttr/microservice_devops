@@ -5,3 +5,4 @@ pgdata
 todo.md
 scripts/
 kafka-data
+*.ruff_cache*
