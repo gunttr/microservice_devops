@@ -40,11 +40,10 @@ def execute_sql_querry(query: str, args) -> int:
                 user=postgres_user,
                 password=postgres_password,
                 host=postgres_host,
-                port=postgres_port) as con:
-                    with con.cursor() as cur:
-                        cur.execute(query, args)
+                port=postgres_port) as con, con.cursor() as cur:
+                cur.execute(query, args)
 
-                        return cur.fetchone()[0]   
+                return cur.fetchone()[0]   
 
 
         except pg.OperationalError as op_err:

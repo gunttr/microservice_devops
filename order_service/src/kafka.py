@@ -5,7 +5,7 @@ from confluent_kafka import Consumer, Producer
 from opentelemetry.propagate import extract as trace_extract
 from opentelemetry.propagate import inject as trace_inject
 from src.otel.logger import logger
-from src.otel.traces import trace, tracer
+from src.otel.traces import tracer
 from src.sql import pgsql_manager
 
 

@@ -33,16 +33,15 @@ class PGSQLManager:
                             password=self.__password,
                             host=self.__host,
                             port=self.__port
-                        ) as con:
-                            with con.cursor() as cur:
-                                cur.execute(query, args)
+                        ) as con, con.cursor() as cur:
+                    cur.execute(query, args)
 
-                                if fetch:
-                                    span.set_attribute("db.result.fetched", True)
-                                    return cur.fetchone()
+                    if fetch:
+                        span.set_attribute("db.result.fetched", True)
+                        return cur.fetchone()
 
-                                span.set_attribute("db.result.fetched", False)
-                                return None
+                    span.set_attribute("db.result.fetched", False)
+                    return None
 
             except pg.OperationalError as op_err:
                 span.set_status(trace.Status(trace.StatusCode.ERROR))

@@ -1,7 +1,8 @@
 import json
 import logging
 import os
-from typing import Any, Literal, Mapping
+from collections.abc import Mapping
+from typing import Any, Literal
 
 from opentelemetry._logs import get_logger, set_logger_provider
 from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
@@ -28,7 +29,7 @@ class JSONFormater(logging.Formatter):
         self, 
         fmt: str | None = None,
         datefmt: str | None = None,
-        style: Literal['%'] | Literal['{'] | Literal['$'] = "%",
+        style: Literal['%', '{', '$'] = "%",
         validate: bool = True,
         *,
         defaults: Mapping[str, Any] | None = None
