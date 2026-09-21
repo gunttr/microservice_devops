@@ -1,10 +1,12 @@
-from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from threading import Thread
+
+from fastapi import FastAPI
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from src.kafka import kafka_manager
 from src.orders_router import orders_router
 from src.otel.logger import logger
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

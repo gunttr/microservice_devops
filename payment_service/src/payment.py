@@ -1,16 +1,18 @@
-from enum import Enum
-from src.otel.logger import logger
+import os
 from datetime import datetime
+from enum import Enum
 from random import random
+
 import psycopg2 as pg
 from fastapi import HTTPException
-import os
+from src.otel.logger import logger
 from src.otel.metrics import (
+    payments_failed_total,
     payments_processed_total,
     payments_succeeded_total,
-    payments_failed_total
 )
-from src.otel.traces import tracer, trace
+from src.otel.traces import trace, tracer
+
 
 class PaymentStatus(str, Enum):
     SUCCESS = "success"

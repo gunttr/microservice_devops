@@ -1,5 +1,6 @@
-from opentelemetry.sdk.resources import Resource
 import os
+
+from opentelemetry.sdk.resources import Resource
 
 OTEL_SERVICE_NAME: str = os.getenv("OTEL_SERVICE_NAME", "notification_service")
 # следующие переменные автоматически подтянуться sdk, если не передавать параметры

@@ -1,11 +1,13 @@
 from random import random
+
 from src.otel.logger import logger
 from src.otel.metrics import (
-    notifications_sent_total,
     notifications_failed_total,
+    notifications_sent_total,
     notifications_succeeded_total,
 )
 from src.otel.traces import tracer
+
 
 def send_notification(notification: dict[str, str]):
     order_id: int = int(notification.get("order_id"))

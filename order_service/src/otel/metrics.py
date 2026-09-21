@@ -1,13 +1,10 @@
+import os
+
 from opentelemetry import metrics
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
-import os
-from src.otel.resource import otel_resource, OTEL_SERVICE_NAME
-
-
-
-
+from src.otel.resource import OTEL_SERVICE_NAME, otel_resource
 
 reader = PeriodicExportingMetricReader(OTLPMetricExporter())
 meterProvider = MeterProvider(resource=otel_resource, metric_readers=[reader])

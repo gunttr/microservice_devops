@@ -2,8 +2,7 @@ from opentelemetry import metrics
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
-from src.otel.resource import otel_resource, OTEL_SERVICE_NAME
-
+from src.otel.resource import OTEL_SERVICE_NAME, otel_resource
 
 # следующие переменные окружения автоматически подтянуться sdk, если не передавать параметры
 # OTEL_EXPORTER_OLTP_ENDPOINT=http://localhost:4318

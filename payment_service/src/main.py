@@ -1,6 +1,7 @@
-from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from threading import Thread
+
+from fastapi import FastAPI
 from src.kafka import kafka_manager
 from src.otel.logger import logger
 

@@ -1,12 +1,13 @@
-import logging
-from typing import Literal, Mapping, Any
 import json
-from src.otel.resource import otel_resource
-from opentelemetry._logs import set_logger_provider, get_logger
+import logging
+import os
+from typing import Any, Literal, Mapping
+
+from opentelemetry._logs import get_logger, set_logger_provider
 from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
 from opentelemetry.sdk._logs import LoggerProvider
 from opentelemetry.sdk._logs.export import SimpleLogRecordProcessor
-import os
+from src.otel.resource import otel_resource
 from src.otel.traces import trace
 
 

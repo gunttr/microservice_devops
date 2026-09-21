@@ -1,11 +1,13 @@
-from fastapi import HTTPException
-import psycopg2 as pg
 import os
+from datetime import datetime
+
+import psycopg2 as pg
+from fastapi import HTTPException
 from src.order import OrderStatus
 from src.otel.logger import logger
-from datetime import datetime
 from src.otel.metrics import payment_failed_orders_total, payment_success_orders_total
 from src.otel.traces import trace, tracer
+
 
 class PGSQLManager:
     def __init__(self, user: str, password: str, db: str, host: str, port: str) -> None:

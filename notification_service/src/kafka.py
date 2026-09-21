@@ -1,12 +1,12 @@
-from confluent_kafka import Consumer
-from src.otel.logger import logger
 import json
-from src.notification import send_notification
 import os
+
+from confluent_kafka import Consumer
+from opentelemetry.propagate import extract as trace_extract
+from src.notification import send_notification
+from src.otel.logger import logger
 from src.otel.traces import tracer
-from opentelemetry.propagate import (
-    extract as trace_extract
-)
+
 
 class KafkaManager:
     def __init__(self, hostname: str, port: str, group_id: str) -> None:

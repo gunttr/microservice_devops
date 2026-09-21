@@ -1,14 +1,13 @@
-from confluent_kafka import Consumer, Producer
-from src.otel.logger import logger
 import json
-from src.payment import PaymentStatus
-from src.payment import process_payments
 import os
+
+from confluent_kafka import Consumer, Producer
+from opentelemetry.propagate import extract as trace_extract
+from opentelemetry.propagate import inject as trace_inject
+from src.otel.logger import logger
 from src.otel.traces import tracer
-from opentelemetry.propagate import (
-    extract as trace_extract,
-    inject as trace_inject
-)
+from src.payment import PaymentStatus, process_payments
+
 
 class KafkaHeaderSetter:
     def set(self, carrier, key, value):
