@@ -7,6 +7,7 @@ from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
 from opentelemetry.sdk._logs import LoggerProvider
 from opentelemetry.sdk._logs.export import SimpleLogRecordProcessor
 import os
+from src.otel.traces import trace
 
 
 class JSONFormater(logging.Formatter):
@@ -35,10 +36,16 @@ class JSONFormater(logging.Formatter):
         
 
     def format(self, record: logging.LogRecord) -> str:
+        current_span = trace.get_current_span().get_span_context()
+        formated_span_id: str = trace.format_span_id(current_span.span_id) if current_span else "0"*32
+        formated_trace_id: str = trace.format_span_id(current_span.trace_id) if current_span else "0"*16
+
         log_record = {
             "timestamp": self.formatTime(record),
             "level": record.levelname,
             "message": record.getMessage(),
+            "trace_id": formated_trace_id,
+            "span_id": formated_span_id
         }
 
         # extra, например, для order_id или username полей

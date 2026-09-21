@@ -2,15 +2,9 @@ from opentelemetry import metrics
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
-from src.otel.resource import otel_resource
-import os
+from src.otel.resource import otel_resource, OTEL_SERVICE_NAME
 
-OTEL_SERVICE_NAME: str = os.getenv("OTEL_SERVICE_NAME", "notification_service")
-# следующие переменные автоматически подтянуться sdk, если не передавать параметры
-# OTEL_EXPORTER_OLTP_ENDPOINT=http://localhost:4318
-# OTEL_EXPORTER_OTLP_METRICS_ENDPOINT="http://localhost:4318/v1/metrics"
-# OTEL_EXPORTER_OTLP_TIMEOUT=10000 (10s)
-# OTEL_EXPORTER_OTLP_METRICS_TIMEOUT=10000 (10s)
+
 
 reader = PeriodicExportingMetricReader(OTLPMetricExporter())
 meterProvider = MeterProvider(resource=otel_resource, metric_readers=[reader])

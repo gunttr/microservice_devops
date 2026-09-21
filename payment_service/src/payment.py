@@ -10,7 +10,7 @@ from src.otel.metrics import (
     payments_succeeded_total,
     payments_failed_total
 )
-
+from src.otel.traces import tracer, trace
 
 class PaymentStatus(str, Enum):
     SUCCESS = "success"
@@ -24,60 +24,90 @@ postgres_host = os.getenv("POSTGRES_HOST", "postgres")
 postgres_port = os.getenv("POSTGRES_PORT", "5432")
 
 
+def execute_sql_querry(query: str, args) -> int:
+    with tracer.start_as_current_span(
+        name="db.execute_querry",
+        attributes={
+            "db.dbms": "postgresql",
+            "db.query": query
+        }
+    ) as span:
+        try:
+            with pg.connect(
+                dbname=postgres_db,
+                user=postgres_user,
+                password=postgres_password,
+                host=postgres_host,
+                port=postgres_port) as con:
+                    with con.cursor() as cur:
+                        cur.execute(query, args)
+
+                        return cur.fetchone()[0]   
+
+
+        except pg.OperationalError as op_err:
+            span.set_status(trace.Status(trace.StatusCode.ERROR))
+            span.record_exception(op_err)
+            logger.critical(
+                msg="Connection to PostgreSQL database failed",
+                extra={
+                    "error": str(op_err),
+                }
+            )
+
+            raise HTTPException(
+                status_code=500,
+                detail="Internal server error"
+            )
+
+        except pg.Error as err:
+            span.set_status(trace.Status(trace.StatusCode.ERROR))
+            span.record_exception(err)
+            logger.error(
+                msg="PostgreSQL transaction failed",
+                extra={
+                    "error": str(err)
+                }
+            )
+            
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to process payment due to database transaction issues"
+            )
+
+
 def process_payments(order_id: int) -> PaymentStatus:
-    status: PaymentStatus = PaymentStatus.SUCCESS
     created_at: datetime = datetime.now()
 
-    if random() < 0.1: # типо ошибка внешнего апи
-        status = PaymentStatus.FAILED
-
-    try:
-        with pg.connect(
-            dbname=postgres_db,
-            user=postgres_user,
-            password=postgres_password,
-            host=postgres_host,
-            port=postgres_port) as con:
-                with con.cursor() as cur:
-                    cur.execute(
-                        """
-                        INSERT into payments ( \
-                        order_id, \
-                        status, \
-                        created_at) \
-                        VALUES (%s, %s, %s) \
-                        RETURNING id;
-                        """, 
-                        (order_id, status, created_at)
-                    )
-
-                    payment_id = cur.fetchone()[0]   
-                
-    except pg.OperationalError as op_err:
-        logger.critical(
-            msg="Connection to PostgreSQL database failed",
-            extra={
-                "error": str(op_err),
-            }
-        )
-
-        raise HTTPException(
-            status_code=500,
-            detail="Internal server error"
-        )
-
-    except pg.Error as err:
-        logger.error(
-            msg="PostgreSQL transaction failed",
-            extra={
-                "error": str(err)
-            }
-        )
+    with tracer.start_as_current_span(
+        name="business.process_payment",
+        attributes={
+            "payment.created_at": str(created_at)
+        }
+    ) as span:
         
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to process payment due to transaction issues"
+        status: PaymentStatus = PaymentStatus.SUCCESS
+
+        if random() < 0.1: # типо ошибка внешнего апи
+            status = PaymentStatus.FAILED
+
+        payment_id: int = execute_sql_querry(
+            """
+            INSERT into payments ( \
+            order_id, \
+            status, \
+            created_at) \
+            VALUES (%s, %s, %s) \
+            RETURNING id;
+            """, 
+            (order_id, status, created_at)
         )
+
+        span.set_attributes({
+            "payment.id": payment_id,
+            "payment.status": status
+        })
+
 
     if status == PaymentStatus.FAILED:
         logger.error(

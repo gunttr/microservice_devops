@@ -3,7 +3,10 @@ from src.otel.logger import logger
 import json
 from src.notification import send_notification
 import os
-
+from src.otel.traces import tracer
+from opentelemetry.propagate import (
+    extract as trace_extract
+)
 
 class KafkaManager:
     def __init__(self, hostname: str, port: str, group_id: str) -> None:
@@ -37,8 +40,26 @@ class KafkaManager:
                     )
                     continue
 
-                notification = json.loads(event.value().decode('utf-8'))
-                send_notification(notification=notification)
+                headers = {}
+                if event_headers := event.headers():
+                    headers = {k: v.decode("utf-8") for k, v in event_headers}
+                
+                context = trace_extract(headers)
+                
+                with tracer.start_as_current_span(
+                    name="kafka.consume",
+                    attributes={"kafka.message.topic": consume_topic},
+                    context=context
+                ) as span:
+
+                    notification = json.loads(event.value().decode('utf-8'))
+
+                    span.set_attributes({
+                        "kafka.message.key": event.key().decode('utf-8'),
+                        "kafka.message.value": json.dumps(notification)
+                    })
+
+                    send_notification(notification=notification)
             
         except Exception as err:
             logger.error(

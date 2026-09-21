@@ -4,6 +4,20 @@ import json
 from src.payment import PaymentStatus
 from src.payment import process_payments
 import os
+from src.otel.traces import tracer
+from opentelemetry.propagate import (
+    extract as trace_extract,
+    inject as trace_inject
+)
+
+class KafkaHeaderSetter:
+    def set(self, carrier, key, value):
+        # carrier - это список, добавляем кортеж (key, value_bytes)
+        if isinstance(value, str):
+            value = value.encode('utf-8')
+        carrier.append((key, value))
+
+kafka_setter_instance = KafkaHeaderSetter()
 
 class KafkaManager:
     def __init__(self, hostname: str, port: str, group_id: str) -> None:
@@ -57,19 +71,29 @@ class KafkaManager:
                         }
                     )
                     continue
-        
-                order_id: int = int(event.value().decode('utf-8'))
-                status: PaymentStatus = process_payments(order_id=order_id)
-                self.__kafka_producer.produce(
-                    topic="payments",
-                    key="payment",
-                    value=json.dumps({
-                        "order_id": order_id,
-                        "status": status.value
-                    }).encode('utf-8'),
-                    callback=self.__kafka_delivery_callback
-                )
-                self.__kafka_producer.flush()
+
+                headers = {}
+                if event_headers := event.headers():
+                    headers = {k: v.decode("utf-8") for k, v in event_headers}
+                
+                context = trace_extract(headers)
+                
+                event_value: str = event.value().decode('utf-8')
+
+                with tracer.start_as_current_span(
+                    name="kafka.consume",
+                    attributes={
+                        "kafka.message.topic": consume_topic,
+                        "kafka.message.key": event.key().decode('utf-8'),
+                        "kafka.message.value": event_value,
+                    },
+                    context=context
+                ):
+                
+                    order_id: int = int(event_value)
+                    status: PaymentStatus = process_payments(order_id=order_id)
+                    self.__produce_payments(order_id, status)
+
         except Exception as err:
             logger.error(
                 msg="Kafka consumer crashed",
@@ -81,6 +105,34 @@ class KafkaManager:
         finally:
             self.__kafka_consumer.close()
 
+
+    def __produce_payments(self, order_id: int, status: PaymentStatus):
+        topic = "payments"
+        key = "payment"
+        value = json.dumps({
+            "order_id": order_id,
+            "status": status.value
+        }).encode('utf-8')
+
+        headers = []
+        trace_inject(headers, setter=kafka_setter_instance)
+
+        with tracer.start_as_current_span(
+            name="kafka.produce",
+            attributes={
+                "kafka.message.topic": topic,
+                "kafka.message.key": key,
+                "kafka.message.value": value
+            }
+        ):
+            self.__kafka_producer.produce(
+                topic=topic,
+                key=key,
+                value=value,
+                headers=headers,
+                callback=self.__kafka_delivery_callback
+            )
+            self.__kafka_producer.flush()
 
     def consumer_close(self):
         self.__kafka_consumer.close()

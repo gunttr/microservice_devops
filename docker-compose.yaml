@@ -141,13 +141,20 @@ services:
     image: grafana/loki:3.7.1
     container_name: loki
     restart: unless-stopped
-    # command: 
-    #   - -config.file=/etc/loki/loki-config.yaml
     ports:
       - "3100:3100"
     volumes:
       - ./configs/loki.yaml:/etc/loki/loki-config.yaml
       - loki-data:/loki
+    networks:
+      - microservices_devops
+
+  jaeger:
+    image: jaegertracing/jaeger:2.20.0
+    container_name: jaeger
+    restart: unless-stopped
+    ports:
+      - "16686:16686"
     networks:
       - microservices_devops
 
@@ -163,7 +170,7 @@ services:
 
       HTTP_PROXY: http://172.21.0.1:12334
       HTTPS_PROXY: http://172.21.0.1:12334
-      NO_PROXY: localhost,127.0.0.1,loki,prometheus
+      NO_PROXY: localhost,127.0.0.1,loki,prometheus,jaeger
     volumes:
       - grafana-data:/var/lib/grafana
     networks:
@@ -197,6 +204,7 @@ services:
       OTEL_EXPORTER_OTLP_TIMEOUT: 15000 # 15 секунд
       OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: "http://otel-collector:4318/v1/metrics"
       OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: "http://otel-collector:4318/v1/logs"
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "http://otel-collector:4318/v1/traces"
       
     restart: always
     networks:
@@ -233,6 +241,7 @@ services:
       OTEL_EXPORTER_OTLP_TIMEOUT: 15000 # 15 секунд
       OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: "http://otel-collector:4318/v1/metrics"
       OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: "http://otel-collector:4318/v1/logs"
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "http://otel-collector:4318/v1/traces"
     restart: always
     networks:
       - microservices_devops
@@ -262,7 +271,7 @@ services:
       OTEL_EXPORTER_OTLP_TIMEOUT: 15000 # 15 секунд
       OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: "http://otel-collector:4318/v1/metrics"
       OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: "http://otel-collector:4318/v1/logs"
-
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "http://otel-collector:4318/v1/traces"
     networks:
       - microservices_devops
     depends_on:

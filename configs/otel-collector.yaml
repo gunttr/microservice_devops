@@ -16,6 +16,11 @@ exporters:
     tls:
       insecure: true
 
+  otlp/jaeger:
+    endpoint: "http://jaeger:4317"
+    tls:
+      insecure: true
+
 extensions:
   health_check:
     endpoint: 0.0.0.0:13133 # такой дебильный дефолтный порт. в компоузе бесполезно, но для кубера норм будет
@@ -31,3 +36,6 @@ service:
     logs:
       receivers: [otlp]
       exporters: [otlphttp/logs]
+    traces:
+      receivers: [otlp]
+      exporters: [otlp/jaeger]

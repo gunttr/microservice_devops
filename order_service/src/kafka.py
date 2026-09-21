@@ -3,7 +3,20 @@ import json
 from src.otel.logger import logger
 from src.sql import pgsql_manager
 import os
+from src.otel.traces import trace, tracer
+from opentelemetry.propagate import (
+    inject as trace_inject,
+    extract as trace_extract
+) 
 
+class KafkaHeaderSetter:
+    def set(self, carrier, key, value):
+        # carrier - это список, добавляем кортеж (key, value_bytes)
+        if isinstance(value, str):
+            value = value.encode('utf-8')
+        carrier.append((key, value))
+
+kafka_setter_instance = KafkaHeaderSetter()
 
 class KafkaManager:
     def __init__(self, hostname: str, port: str, group_id: str) -> None:
@@ -44,6 +57,7 @@ class KafkaManager:
         
         try:
             while True:
+                
                 event = self.__kafka_consumer.poll(1.0)
                 
                 if event is None:
@@ -59,8 +73,27 @@ class KafkaManager:
                     )
                     continue
 
-                payment = json.loads(event.value().decode('utf-8'))
-                pgsql_manager.update_order_status(payment=payment)
+                headers = {}
+                if event_headers := event.headers():
+                    headers = {k: v.decode("utf-8") for k, v in event_headers}
+                logger.info(f"{headers}")
+                context = trace_extract(headers)
+                
+                with tracer.start_as_current_span(
+                    name="kafka.consume",
+                    attributes={"kafka.message.topic": consume_topic},
+                    context=context
+                ) as span:
+                    payment = json.loads(event.value().decode('utf-8'))
+
+                    span.set_attributes({
+                        "messaging.message.order_id": payment.get("order_id"),
+                        "messaging.message.status": payment.get("status")
+                    })
+
+                    pgsql_manager.update_order_status(payment=payment)
+
+
         except Exception as err:
             logger.error(
                 msg="Kafka consumer crashed",
@@ -74,28 +107,61 @@ class KafkaManager:
 
     # отправляем notification_service
     def produce_notifications(self, order_id: int, order_username: str):
-        self.__kafka_producer.produce(
-            topic="notifications",
-            key="order",
-            value=json.dumps({
-                    "order_id": order_id,
-                    "username": order_username
-                }),
-            callback=self.__kafka_delivery_callback
-        )
+        with tracer.start_as_current_span(
+            name="kafka.produce_notifications",
+            attributes={
+                "kafka.message.topic": "notifications"
+            }
+        ) as span:
+            produce_value = json.dumps({
+                "order_id": order_id,
+                "username": order_username
+            })
+
+            headers = []
+            trace_inject(headers, setter=kafka_setter_instance)
+            
+            self.__kafka_producer.produce(
+                topic="notifications",
+                key="order",
+                value=produce_value,
+                headers=headers,
+                callback=self.__kafka_delivery_callback
+            )
+
+            span.set_attributes({
+                "kafka.message.key": "order",
+                "kafka.message.value": produce_value
+            })
     
         self.__kafka_producer.flush()
 
     # отправляем payment_service
     def produce_orders(self, order_id: int):
-        self.__kafka_producer.produce(
-            topic="orders",
-            key="order_id",
-            value=str(order_id),
-            callback=self.__kafka_delivery_callback
-        )
+        with tracer.start_as_current_span(
+            name="kafka.produce_orders",
+            attributes={
+                "kafka.message.topic": "orders"
+            }
+        ) as span:
 
-        self.__kafka_producer.flush()
+            headers = []
+            trace_inject(headers, setter=kafka_setter_instance)
+
+            self.__kafka_producer.produce(
+                topic="orders",
+                key="order_id",
+                value=str(order_id),
+                headers=headers,
+                callback=self.__kafka_delivery_callback
+            )
+
+            span.set_attributes({
+                "kafka.message.key": "order_id",
+                "kafka.message.value": str(order_id)
+            })
+            
+            self.__kafka_producer.flush()
 
 
     def close_consumer(self):
