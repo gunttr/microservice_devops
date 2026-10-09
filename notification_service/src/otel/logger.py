@@ -7,7 +7,7 @@ from typing import Any, Literal
 from opentelemetry._logs import get_logger, set_logger_provider
 from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
 from opentelemetry.sdk._logs import LoggerProvider
-from opentelemetry.sdk._logs.export import SimpleLogRecordProcessor
+from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from src.otel.resource import otel_resource
 from src.otel.traces import trace
 
@@ -99,7 +99,7 @@ exporter = OTLPLogExporter()
 # Настройка logger провайдера
 logger_provider = LoggerProvider(otel_resource)
 logger_provider.add_log_record_processor(
-    SimpleLogRecordProcessor(exporter)
+    BatchLogRecordProcessor(exporter)
 )
 set_logger_provider(logger_provider)
 

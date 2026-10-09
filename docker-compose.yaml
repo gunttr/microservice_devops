@@ -179,7 +179,7 @@ services:
 
   order_service:
     build: order_service/
-    image: ghcr.io/gunttr/order_service:1.0-amd64
+    image: ghcr.io/gunttr/order_service:1.1-amd64
     container_name: order_service
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8000/health"]
@@ -216,7 +216,7 @@ services:
 
   payment_service:
     build: payment_service/
-    image: ghcr.io/gunttr/payment_service:1.0-amd64
+    image: ghcr.io/gunttr/payment_service:1.1-amd64
     container_name: payment_service
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8000/health"]
@@ -251,7 +251,7 @@ services:
 
   notification_service:
     build: notification_service/
-    image: ghcr.io/gunttr/notification_service:1.0-amd64
+    image: ghcr.io/gunttr/notification_service:1.1-amd64
     container_name: notification_service
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8000/health"]
