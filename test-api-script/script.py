@@ -52,11 +52,20 @@ while True:
 
             sleep(5)
 
-        except requests.HTTPError as err:
-            print(err)
+        except requests.exceptions.HTTPError as err:
+            print(f"HTTP Error occured: {err}")
             continue
-        except requests.ConnectionError as err:
-            print("Failed to connect to api. Probably the api is down")
+        except requests.exceptions.ConnectionError as err:
+            print(f"Connection error occured: {err}")
+            break
+        except requests.exceptions.ReadTimeout as err:
+            print(f"The server did not send any data in the allotted amount of time: {err}")
+            break
+        except requests.exceptions.Timeout as err:
+            print(f"The request timed out: {err}")
+            break
+        except requests.exceptions.RequestException as err:
+            print(f"An ambiguous error has occured: {err}")
             break
 
     print(f"Sleeping for {TIME_TO_SLEEP_SECONDS} seconds")
