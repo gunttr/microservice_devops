@@ -86,8 +86,9 @@ class OTelJSONHandler(logging.Handler):
 
 
 # Настройка логера
-logger = logging.getLogger()
+logger = logging.getLogger("order_service")
 logger.setLevel(os.getenv("LOG_LEVEL", logging.INFO))
+logger.propagate = False
 
 # настройка otlp экспортера
 # OTEL_EXPORTER_OLTP_ENDPOINT=http://localhost:4318
