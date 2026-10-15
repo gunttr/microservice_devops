@@ -39,8 +39,8 @@ class JSONFormater(logging.Formatter):
 
     def format(self, record: logging.LogRecord) -> str:
         current_span = trace.get_current_span().get_span_context()
-        formated_span_id: str = trace.format_span_id(current_span.span_id) if current_span else "0"*32
-        formated_trace_id: str = trace.format_span_id(current_span.trace_id) if current_span else "0"*16
+        formated_span_id: str = trace.format_span_id(current_span.span_id) if current_span else "0"*16
+        formated_trace_id: str = trace.format_trace_id(current_span.trace_id) if current_span else "0"*32
 
         log_record = {
             "timestamp": self.formatTime(record),
