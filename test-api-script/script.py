@@ -23,6 +23,7 @@ except ValueError:
 products = ["apple", "banana", "cherry pie", "kilka", "cheetos", "coffee", "matcha"]
 users = ["vladick", "nastya", "kostyan", "maksos", "igorek", "jeka"]
 
+print("The script has started")
 
 while True:
     print("Waken up from sleep")
