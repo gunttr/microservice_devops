@@ -1,0 +1,23 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: &name kafka-create-topics
+  labels:
+    app.kubernetes.io/name: *name
+    app.kubernetes.io/part-of: kafka
+    app.kubernetes.io/component: broker
+spec:
+  ttlSecondsAfterFinished: 100
+  backoffLimit: 6
+  template:
+    spec:
+      containers:
+      - name: *name
+        image: apache/kafka:4.3.1
+        command:
+          - /bin/sh
+          - -c
+          - /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --topic orders --bootstrap-server kafka:9092 &&
+            /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --topic payments --bootstrap-server kafka:9092 &&
+            /opt/kafka/bin/kafka-topics.sh --create --if-not-exists --topic notifications --bootstrap-server kafka:9092
+      restartPolicy: Never

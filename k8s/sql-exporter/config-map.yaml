@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sql-exporter
+  labels:
+    app.kubernetes.io/part-of: sql-exporter
+    app.kubernetes.io/component: observability
+data:
+  sql_exporter.yaml: |
+    target:
+      name: postgres_db
+      data_source_name: "{{ SQLEXPORTER_TARGET_DSN }}"
+      collectors: [business_metrics]
+
+    collectors:
+      - collector_name: business_metrics
+
+        metrics:
+          - metric_name: orders_count
+            type: gauge
+            help: 'Current number of orders stored in database.'
+            static_labels:
+              source: db
+            values: [value]
+            query: |
+              SELECT COUNT(*) AS value
+              FROM orders;
+
+          - metric_name: payment_success_orders_count
+            type: gauge
+            help: 'Current number of orders with payment_success status stored in the database.'
+            static_labels:
+              source: db
+            values: [value]
+            query: |
+              SELECT COUNT(*) AS value
+              FROM orders
+              WHERE status = 'payment_success';
+
+          - metric_name: payment_failed_orders_count
+            type: gauge
+            help: 'Current number of orders with payment_failed status stored in the database.'
+            static_labels:
+              source: db
+            values: [value]
+            query: |
+              SELECT COUNT(*) AS value
+              FROM orders
+              WHERE status = 'payment_failed';
+
+          - metric_name: payments_count
+            type: gauge
+            help: 'Current number of payments stored in the database.'
+            static_labels:
+              source: db
+            values: [value]
+            query: |
+              SELECT COUNT(*) AS value
+              FROM payments;
+
+          - metric_name: payments_succeeded_count
+            type: gauge
+            help: 'Current number of successful payments stored in the database.'
+            static_labels:
+              source: db
+            values: [value]
+            query: |
+              SELECT COUNT(*) AS value
+              FROM payments
+              WHERE status = 'success';
+
+          - metric_name: payments_failed_count
+            type: gauge
+            help: 'Current number of failed payments stored in the database.'
+            static_labels:
+              source: db
+            values: [value]
+            query: |
+              SELECT COUNT(*) AS value
+              FROM payments
+              WHERE status = 'failed';

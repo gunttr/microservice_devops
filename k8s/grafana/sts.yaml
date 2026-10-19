@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: &name grafana
+  labels:
+    app.kubernetes.io/name: *name
+    app.kubernetes.io/version: &version "13.0-slim"
+    app.kubernetes.io/part-of: &part-of microservice-devops
+    app.kubernetes.io/component: &component observability
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: *name
+      app.kubernetes.io/part-of: *part-of
+      app.kubernetes.io/component: *component
+  serviceName: grafana-headless
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: *name
+        app.kubernetes.io/version: *version
+        app.kubernetes.io/part-of: *part-of
+        app.kubernetes.io/component: *component
+    spec:
+      containers:
+      - name: *name
+        image: grafana/grafana:13.0-slim 
+        imagePullPolicy: IfNotPresent
+
+        ports:
+        - name: service-port
+          containerPort: 3000
+
+        envFrom:
+          - secretRef:
+              name: grafana
+
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "250Mi"
+          limits:
+            cpu: "1000m"
+            memory: "1Gi"
+
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: service-port
+          initialDelaySeconds: 30
+          timeoutSeconds: 3
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: service-port
+          initialDelaySeconds: 10
+          timeoutSeconds: 3
+
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 10001
+          runAsGroup: 10001
+
+        volumeMounts:
+          - name: grafana-data
+            mountPath: /var/lib/grafana
+          - name: logs-dashboard
+            mountPath: /etc/grafana/logs_dashboard.json
+            subPath: logs_dashboard.json
+          - name: metrics-dashboard
+            mountPath: /etc/grafana/metrics_dashboard.json
+            subPath: metrics_dashboard.json
+          - name: alert-rules
+            mountPath: /etc/grafana/alert_rules.json
+            subPath: alert_rules.json
+
+      volumes:
+        - name: grafana-data
+          hostPath:
+            path: /var/lib/grafana/data     
+        - name: logs-dashboard
+          configMap:
+            name: logs-dashboard
+        - name: metrics-dashboard
+          configMap: 
+            name: metrics-dashboard
+        - name: alert-rules
+          configMap:
+            name: alert-rules
+
+

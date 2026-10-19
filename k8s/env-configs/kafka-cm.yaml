@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka
+  labels:
+    app.kubernetes.io/name: kafka-config
+    app.kubernetes.io/part-of: microservice-devops
+    app.kubernetes.io/component: backend
+data:
+  KAFKA_HOSTNAME: "kafka"
+  KAFKA_PORT: "9092"

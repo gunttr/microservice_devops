@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel
+  labels:
+    app.kubernetes.io/name: otel-config
+    app.kubernetes.io/part-of: microservice-devops
+    app.kubernetes.io/component: backend
+data:
+  OTEL_EXPORTER_OTLP_TIMEOUT: "15000" # 15 секунд
+  OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: "http://otel-collector:4318/v1/metrics"
+  OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: "http://otel-collector:4318/v1/logs"
+  OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "http://otel-collector:4318/v1/traces"

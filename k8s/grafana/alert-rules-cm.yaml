@@ -1,0 +1,106 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alert-rules
+  labels:
+    app.kubernetes.io/name: alert-rules
+    app.kubernetes.io/part-of: grafana
+    app.kubernetes.io/component: observability
+data:
+  alert_rules.json: |
+    {
+        "apiVersion": 1,
+        "groups": [
+            {
+                "orgId": 1,
+                "name": "log-alerts",
+                "folder": "log-alerts",
+                "interval": "1m",
+                "rules": [
+                    {
+                        "uid": "ffyqtcit1a8sga",
+                        "title": "Critical Error",
+                        "condition": "C",
+                        "data": [
+                            {
+                                "refId": "A",
+                                "queryType": "instant",
+                                "relativeTimeRange": {
+                                    "from": 600,
+                                    "to": 0
+                                },
+                                "datasourceUid": "cfyne3azbx5a8e",
+                                "model": {
+                                    "editorMode": "code",
+                                    "expr": "sum by (service_name) (\n  count_over_time(\n    {service_name=~\"notification_service|order_service|payment_service\"}\n    | json\n    | level=\"CRITICAL\"\n    [5m]\n  )\n)",
+                                    "instant": true,
+                                    "intervalMs": 1000,
+                                    "maxDataPoints": 43200,
+                                    "queryType": "instant",
+                                    "refId": "A"
+                                }
+                            },
+                            {
+                                "refId": "C",
+                                "queryType": "expression",
+                                "relativeTimeRange": {
+                                    "from": 0,
+                                    "to": 0
+                                },
+                                "datasourceUid": "__expr__",
+                                "model": {
+                                    "conditions": [
+                                        {
+                                            "evaluator": {
+                                                "params": [
+                                                    0
+                                                ],
+                                                "type": "gt"
+                                            },
+                                            "operator": {
+                                                "type": "and"
+                                            },
+                                            "query": {
+                                                "params": [
+                                                    "C"
+                                                ]
+                                            },
+                                            "reducer": {
+                                                "params": [],
+                                                "type": "last"
+                                            },
+                                            "type": "query"
+                                        }
+                                    ],
+                                    "datasource": {
+                                        "type": "__expr__",
+                                        "uid": "__expr__"
+                                    },
+                                    "expression": "A",
+                                    "intervalMs": 1000,
+                                    "maxDataPoints": 43200,
+                                    "refId": "C",
+                                    "type": "threshold"
+                                }
+                            }
+                        ],
+                        "dashboardUid": "mag4w8h",
+                        "panelId": 5,
+                        "noDataState": "OK",
+                        "execErrState": "Error",
+                        "annotations": {
+                            "__dashboardUid__": "mag4w8h",
+                            "__panelId__": "5",
+                            "description": "надо бы чинить хуятину",
+                            "runbook_url": "https://neal.fun/spend/",
+                            "summary": "Произошел пиздак"
+                        },
+                        "isPaused": false,
+                        "notification_settings": {
+                            "receiver": "tg-фывфыв"
+                        }
+                    }
+                ]
+            }
+        ]
+    }

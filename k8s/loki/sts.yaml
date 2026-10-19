@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: StatefulSet
+
+metadata:
+  name: &name loki
+  labels:
+    app.kubernetes.io/name: *name
+    app.kubernetes.io/version: &version "3.7.1"
+    app.kubernetes.io/part-of: &part-of microservice-devops
+    app.kubernetes.io/component: &component observability
+
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: *name
+      app.kubernetes.io/part-of: *part-of
+      app.kubernetes.io/component: *component
+
+  serviceName: loki-headless
+  replicas: 1
+
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: *name
+        app.kubernetes.io/version: *version
+        app.kubernetes.io/part-of: *part-of
+        app.kubernetes.io/component: *component
+
+    spec:
+      containers:
+        - name: *name
+          image: grafana/loki:3.7.1
+          imagePullPolicy: IfNotPresent
+
+          args:
+            - -config.file=/etc/loki/loki-config.yaml
+
+          ports:
+            - name: http-metrics
+              containerPort: 3100
+
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "250Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http-metrics
+            initialDelaySeconds: 15
+            periodSeconds: 10
+
+          livenessProbe:
+            httpGet:
+              path: /ready
+              port: http-metrics
+            initialDelaySeconds: 45
+            periodSeconds: 20
+
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+
+          volumeMounts:
+            - name: loki-data
+              mountPath: /loki
+
+            - name: loki-config
+              mountPath: /etc/loki/loki-config.yaml
+              subPath: loki-config.yaml
+
+      volumes:
+        - name: loki-data
+          hostPath:
+            path: /var/lib/loki/data
+
+        - name: loki-config
+          configMap:
+            name: loki

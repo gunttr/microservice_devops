@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: &name test-api-script
+  labels:
+    app.kubernetes.io/name: *name
+    app.kubernetes.io/version: &version "1.1"
+    app.kubernetes.io/part-of: &part-of microservice-devops
+    app.kubernetes.io/component: &component backend-testing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: *name
+      app.kubernetes.io/part-of: *part-of
+      app.kubernetes.io/component: *component
+  
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: *name
+        app.kubernetes.io/version: *version
+        app.kubernetes.io/part-of: *part-of
+        app.kubernetes.io/component: *component
+    spec:
+      containers:
+      - name: *name
+        image: ghcr.io/gunttr/test-api-script:1.1-amd64
+
+        env:
+          - name: API_ENDPOINT
+            value: "http://order-service:8000"
+          - name: TIME_TO_SLEEP_SECONDS
+            value: "180"
+          - name: REQUESTS_PER_ITERATION
+            value: "20"
+
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        

@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: &name sql-exporter
+  labels:
+    app.kubernetes.io/name: *name
+    app.kubernetes.io/version: &version "0.24.8"
+    app.kubernetes.io/part-of: &part-of microservice-devops
+    app.kubernetes.io/component: &component observability
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: *name
+      app.kubernetes.io/part-of: *part-of
+      app.kubernetes.io/component: *component
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: *name
+        app.kubernetes.io/version: *version
+        app.kubernetes.io/part-of: *part-of
+        app.kubernetes.io/component: *component
+    spec:
+      containers:
+      - name: *name
+        image: burningalchemist/sql_exporter:0.24.8
+        imagePullPolicy: IfNotPresent
+
+        args:
+          - "-config.file"
+          - "/config/sql_exporter.yaml"
+
+        ports:
+          - name: metrics
+            containerPort: 9399
+        
+        envFrom:
+        - configMapRef:
+            name: pgsql
+        - secretRef:
+            name: pgsql
+        
+        env:
+          - name: SQLEXPORTER_TARGET_DSN
+            value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)?sslmode=disable"
+
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "256Mi"
+
+        readinessProbe:
+          httpGet:
+            port: metrics
+            path: /metrics
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 5
+        
+        livenessProbe:
+          httpGet:
+            port: metrics
+            path: /metrics
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 5
+          
+        volumeMounts:
+          - name: sql-exporter-config
+            mountPath: /config/sql_exporter.yaml
+            subPath: sql_exporter.yaml
+
+
+      volumes:
+        - name: sql-exporter-config
+          configMap:
+            name: sql-exporter
